@@ -1,8 +1,16 @@
-const {Op} = require('sequelize');
+const {Op, INTEGER} = require('sequelize');
 const investmentOptionRepository = require('../bin/database').DB.InvestmentOption;
+const initRepository = require('../bin/database').DB.InitModels;
+const {sequelize} = require("../bin/database");
 
 async function getAll(req,res){
-    investmentOptionRepository.findAll().then(data=>{
+    initRepository.investment_option.findAll({
+        include:
+            [{
+            as: 'status',
+            model: sequelize.model('status')
+            }]
+    }).then(data=>{
         res.send(data);
     }).catch(err=>{
         res.status(500).send({
@@ -12,8 +20,9 @@ async function getAll(req,res){
 }
 async function createInvestmentOption(req,res){
     try{
-        const { name } =req.body;
-        const newInvestmentOption = await investmentOptionRepository.create({name});
+        const obj =req.body;
+        console.log(JSON.stringify(obj))
+        const newInvestmentOption = await initRepository.investment_option.create(obj);
         res.status(201).json(newInvestmentOption);
     }
     catch (err){
@@ -23,7 +32,13 @@ async function createInvestmentOption(req,res){
 }
 async function getById(req,res){
     const id = req.params.id;
-    investmentOptionRepository.findByPk(id)
+    await initRepository.investment_option.findByPk(id, {
+        include:
+            [{
+                as: 'status',
+                model: sequelize.model('status')
+            }]
+    })
         .then(data=>{
             if(data){
                 res.send(data)
@@ -33,34 +48,34 @@ async function getById(req,res){
                 });
             }
         }).catch(err=>{
-        res.status(500).send({
-            message: "Error at retrieving investmentOption with id="+id
+            console.log(err)
+            res.status(500).send({
+                message: "Error at retrieving investmentOption with id="+id
+            });
         });
-    });
 }
-async function getByName(req,res){
-    let name = req.params.name;
-    investmentOptionRepository.findAll({
-        where: { name: {
-                [Op.like]: `%${name}%`
-            }}
-    })
+async function getByStatus(req, res){
+    let id = req.params.status;
+    await initRepository.investment_option.findAll({
+        where: { status_id: parseInt(id) }
+    }
+    )
         .then(data=>{
             res.send(data);
         }).catch(err=>{
-        res.status(500).send({
-            message:
-                err.message || "error at getting by name"
+            res.status(500).send({
+                message:
+                    err.message || "error at getting by name"
+            })
         })
-    })
 }
 async function updateById(req,res){
     const id = req.params.id;
-    investmentOptionRepository.update(req.body,{
+    await initRepository.investment_option.update(req.body,{
         where: {id:id}
     })
         .then(num => {
-            if (num => id){
+            if (num){
                 res.send({
                     message: "investmentOption updated"
                 });
@@ -79,7 +94,7 @@ async function updateById(req,res){
 async function deleteById(req,res){
     const id = req.params.id;
 
-    investmentOptionRepository.destroy({
+    initRepository.investment_option.destroy({
         where: {id: id}
     }).then(num => {
         if (num != null && !isNaN(num)){
@@ -101,7 +116,7 @@ module.exports = {investmentOptionRepository: investmentOptionRepository,
     createInvestmentOption,
     getAll,
     getById,
-    getByName,
+    getByStatus,
     updateById,
     deleteById
 };
