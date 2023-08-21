@@ -1,10 +1,9 @@
 const {Op} = require('sequelize');
 const statusRepository = require('../bin/database').DB.Status;
-const Status =require('../models/status');
-const Investment = require('../models/investment');
+const initRepository = require('../bin/database').DB.InitModels;
 
 async function getAll(req,res){
-    statusRepository.findAll().then(data=>{
+    initRepository.status.findAll().then(data=>{
         res.send(data);
     }).catch(err=>{
         res.status(500).send({
@@ -14,8 +13,8 @@ async function getAll(req,res){
 }
 async function createStatus(req,res){
     try{
-        const { name } =req.body;
-        const newStatus = await statusRepository.create({name});
+        const  name  = req.body;
+        const newStatus = await initRepository.status.create(name);
         res.status(201).json(newStatus);
     }
     catch (err){
@@ -25,7 +24,7 @@ async function createStatus(req,res){
 }
 async function getById(req,res){
     const id = req.params.id;
-    statusRepository.findByPk(id)
+    initRepository.status.findByPk(id)
         .then(data=>{
             if(data){
                 res.send(data)
@@ -42,7 +41,7 @@ async function getById(req,res){
 }
 async function getByName(req,res){
     let name = req.params.name;
-    statusRepository.findAll({
+    initRepository.status.findAll({
         where: { name: {
             [Op.like]: `%${name}%`
             }}
@@ -58,7 +57,7 @@ async function getByName(req,res){
 }
 async function updateById(req,res){
     const id = req.params.id;
-    statusRepository.update(req.body,{
+    initRepository.status.update(req.body,{
         where: {id:id}
     })
         .then(num => {
@@ -81,7 +80,7 @@ async function updateById(req,res){
 async function deleteById(req,res){
     const id = req.params.id;
 
-    statusRepository.destroy({
+    initRepository.status.destroy({
       where: {id: id}
     }).then(num => {
         if (num != null && !isNaN(num)){
