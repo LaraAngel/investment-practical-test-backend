@@ -71,6 +71,7 @@ async function getByStatus(req, res){
 }
 async function updateById(req,res){
     const id = req.params.id;
+    req.body.id = id;
     await initRepository.investment_option.update(req.body,{
         where: {id:id}
     })

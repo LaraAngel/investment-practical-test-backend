@@ -57,6 +57,7 @@ async function getByName(req,res){
 }
 async function updateById(req,res){
     const id = req.params.id;
+    req.body.id = id;
     initRepository.status.update(req.body,{
         where: {id:id}
     })
