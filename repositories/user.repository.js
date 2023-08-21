@@ -1,8 +1,15 @@
-const {Op,Sequelize} = require('sequelize');
+const {Op, INTEGER} = require('sequelize');
 const userRepository = require('../bin/database').DB.User;
+const initRepository = require('../bin/database').DB.InitModels;
+const {sequelize} = require("../bin/database");
 
 async function getAll(req,res){
-    userRepository.findAll().then(data=>{
+    initRepository.user.findAll({
+        include: [{
+            as: 'status',
+            model: sequelize.model('status')
+        }]
+    }).then(data=>{
         res.send(data);
     }).catch(err=>{
         res.status(500).send({
@@ -12,8 +19,9 @@ async function getAll(req,res){
 }
 async function createUser(req,res){
     try{
-        const { name } =req.body;
-        const newUser = await userRepository.create({name});
+        const obj =req.body;
+        console.log(JSON.stringify(obj))
+        const newUser = await initRepository.user.create(obj);
         res.status(201).json(newUser);
     }
     catch (err){
@@ -23,7 +31,11 @@ async function createUser(req,res){
 }
 async function getById(req,res){
     const id = req.params.id;
-    await userRepository.findByPk(id, {include: [models.Status] })
+    await initRepository.user.findByPk(id, {
+        include:
+            [{as: 'status',
+                model: sequelize.model('status') }]
+    })
         .then(data=>{
             if(data){
                 res.send(data)
@@ -33,34 +45,34 @@ async function getById(req,res){
                 });
             }
         }).catch(err=>{
-        res.status(500).send({
-            message: "Error at retrieving user with id="+id
+            console.log(err)
+            res.status(500).send({
+                message: "Error at retrieving user with id="+id
+            });
         });
-    });
 }
-async function getByName(req,res){
-    let name = req.params.name;
-    userRepository.findAll({
-        where: { name: {
-                [Op.like]: `%${name}%`
-            }}
-    })
+async function getByStatus(req, res){
+    let id = req.params.status;
+    await initRepository.user.findAll({
+        where: { status_id: parseInt(id) }}
+    )
         .then(data=>{
             res.send(data);
         }).catch(err=>{
-        res.status(500).send({
-            message:
-                err.message || "error at getting by name"
+            res.status(500).send({
+                message:
+                    err.message || "error at getting by name"
+            })
         })
-    })
 }
 async function updateById(req,res){
     const id = req.params.id;
-    userRepository.update(req.body,{
+    req.body.id = id;
+    initRepository.user.update(req.body,{
         where: {id:id}
     })
         .then(num => {
-            if (num => id){
+            if (num){
                 res.send({
                     message: "user updated"
                 });
@@ -79,7 +91,7 @@ async function updateById(req,res){
 async function deleteById(req,res){
     const id = req.params.id;
 
-    userRepository.destroy({
+    initRepository.user.destroy({
         where: {id: id}
     }).then(num => {
         if (num != null && !isNaN(num)){
@@ -101,7 +113,7 @@ module.exports = {userRepository: userRepository,
     createUser,
     getAll,
     getById,
-    getByName,
+    getByStatus,
     updateById,
     deleteById
 };

@@ -14,8 +14,8 @@ router.get('/:id', async(req,res)=> {
   await repository.getById(req, res);
 });
 
-router.get("/name/:name", async(req,res)=>{
-  await repository.getByName(req,res);
+router.get("/status/:status", async(req,res)=>{
+  await repository.getByStatus(req,res);
 });
 
 router.put('/:id', async(req,res)=> {

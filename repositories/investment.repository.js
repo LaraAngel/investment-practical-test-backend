@@ -73,11 +73,12 @@ async function getByStatus(req, res){
 }
 async function updateById(req,res){
     const id = req.params.id;
-    await initRepository.investment.update(req.body,{
+    req.body.id = id;
+    initRepository.investment.update(req.body,{
         where: {id:id}
     })
         .then(num => {
-            if (num){
+            if (num => id){
                 res.send({
                     message: "investment updated"
                 });
@@ -109,6 +110,7 @@ async function deleteById(req,res){
             });
         }
     }).catch(err=>{
+        console.log(err)
         res.status(500).send({
             message: "problem at trying to delete investment"
         });
