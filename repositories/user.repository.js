@@ -1,10 +1,11 @@
 const {Op, INTEGER} = require('sequelize');
 const userRepository = require('../bin/database').DB.User;
-const initRepository = require('../bin/database').DB.InitModels;
+const initModels = require('../models/init-models');
 const {sequelize} = require("../bin/database");
+const models = initModels(sequelize);
 
 async function getAll(req,res){
-    initRepository.user.findAll({
+    models.user.findAll({
         include: [{
             as: 'status',
             model: sequelize.model('status')
@@ -21,7 +22,7 @@ async function createUser(req,res){
     try{
         const obj =req.body;
         console.log(JSON.stringify(obj))
-        const newUser = await initRepository.user.create(obj);
+        const newUser = await models.user.create(obj);
         res.status(201).json(newUser);
     }
     catch (err){
@@ -31,7 +32,7 @@ async function createUser(req,res){
 }
 async function getById(req,res){
     const id = req.params.id;
-    await initRepository.user.findByPk(id, {
+    await models.user.findByPk(id, {
         include:
             [{as: 'status',
                 model: sequelize.model('status') }]
@@ -51,9 +52,14 @@ async function getById(req,res){
             });
         });
 }
+
+async function validateWithEmail(req, res){
+    let a;
+}
+
 async function getByStatus(req, res){
     let id = req.params.status;
-    await initRepository.user.findAll({
+    await models.user.findAll({
         where: { status_id: parseInt(id) }}
     )
         .then(data=>{
@@ -68,7 +74,7 @@ async function getByStatus(req, res){
 async function updateById(req,res){
     const id = req.params.id;
     req.body.id = id;
-    initRepository.user.update(req.body,{
+    models.user.update(req.body,{
         where: {id:id}
     })
         .then(num => {
@@ -91,7 +97,7 @@ async function updateById(req,res){
 async function deleteById(req,res){
     const id = req.params.id;
 
-    initRepository.user.destroy({
+    models.user.destroy({
         where: {id: id}
     }).then(num => {
         if (num != null && !isNaN(num)){
@@ -115,5 +121,6 @@ module.exports = {userRepository: userRepository,
     getById,
     getByStatus,
     updateById,
-    deleteById
+    deleteById,
+    validateWithEmail
 };
