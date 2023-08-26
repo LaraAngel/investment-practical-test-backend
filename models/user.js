@@ -59,9 +59,12 @@ module.exports = function(sequelize, DataTypes) {
         }
       },
       beforeUpdate: async (user)=>{
-        if (user.password){
-          const salt = await bcrypt.genSalt(12,'a');
+        console.log(JSON.stringify(user))
+        if(user.password){
+          const salt = await bcrypt.genSalt(12,'a')
+          user.salt = salt;
           user.password = await bcrypt.hash(user.password, salt);
+          console.log(JSON.stringify(user))
         }
       }
     },
