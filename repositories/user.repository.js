@@ -1,8 +1,22 @@
-const {Op,Sequelize} = require('sequelize');
+const {Op} = require('sequelize');
 const userRepository = require('../bin/database').DB.User;
+const initModels = require('../models/init-models');
+const {sequelize} = require("../bin/database");
+const models = initModels(sequelize);
+const User = models.user;
+//login
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv').config();
+
 
 async function getAll(req,res){
-    userRepository.findAll().then(data=>{
+    User.findAll({
+        include: [{
+            as: 'status',
+            model: models.status
+        }]
+    }).then(data=>{
         res.send(data);
     }).catch(err=>{
         res.status(500).send({
@@ -12,8 +26,8 @@ async function getAll(req,res){
 }
 async function createUser(req,res){
     try{
-        const { name } =req.body;
-        const newUser = await userRepository.create({name});
+        const obj =req.body;
+        const newUser = await User.create(obj);
         res.status(201).json(newUser);
     }
     catch (err){
@@ -23,7 +37,11 @@ async function createUser(req,res){
 }
 async function getById(req,res){
     const id = req.params.id;
-    await userRepository.findByPk(id, {include: [models.Status] })
+    await User.findByPk(id, {
+        include:
+            [{as: 'status',
+                model: models.status }]
+    })
         .then(data=>{
             if(data){
                 res.send(data)
@@ -33,53 +51,76 @@ async function getById(req,res){
                 });
             }
         }).catch(err=>{
-        res.status(500).send({
-            message: "Error at retrieving user with id="+id
+            console.log(err)
+            res.status(500).send({
+                message: "Error at retrieving user with id="+id
+            });
         });
-    });
 }
-async function getByName(req,res){
-    let name = req.params.name;
-    userRepository.findAll({
-        where: { name: {
-                [Op.like]: `%${name}%`
-            }}
-    })
+
+async function loginEmail(req, res){
+    const user = await User.findOne({where: {email: req.body.email}});
+    if (user){
+        const validLogin = await user.validPassword(req.body.password);
+        // const validLogin = await bcrypt.compare(req.body.password, user.password);
+        if (validLogin){
+            token = jwt.sign({
+                "id": user.id,
+                "balance": user.balance,
+                "birthday": user.birthday,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "status_id": user.status_id,
+            },process.env.SECRET);
+            res.status(200).json({token:token})
+        }else{
+            res.status(400).json({ error: "Wrong pass"});
+        }
+    }else{
+        res.status(404).json({ error: "Invalid user"})
+    }
+}
+
+async function getByStatus(req, res){
+    let id = req.params.status;
+    await User.findAll({
+        where: { status_id: parseInt(id) }}
+    )
         .then(data=>{
             res.send(data);
         }).catch(err=>{
-        res.status(500).send({
-            message:
-                err.message || "error at getting by name"
+            res.status(500).send({
+                message:
+                    err.message || "error at getting by name"
+            })
         })
-    })
 }
 async function updateById(req,res){
     const id = req.params.id;
-    userRepository.update(req.body,{
-        where: {id:id}
-    })
-        .then(num => {
-            if (num => id){
-                res.send({
-                    message: "user updated"
-                });
-            }else{
-                res.send({
-                    message: `Cant find user with id ${id}`
-                });
-            }
-        })
-        .catch(err=>{
-            res.status(500).send({
-                message: "error at updating"
-            });
+    req.body.id = id;
+
+    const user = await User.findByPk(id);
+
+    if (user){
+        user.set(req.body);
+
+        await user.save();
+
+        res.send({
+            message: "update"
         });
+    } else {
+        res.status(404).send({
+            message: `didn't find user with id ${id}`
+        })
+    }
+
 }
 async function deleteById(req,res){
     const id = req.params.id;
 
-    userRepository.destroy({
+    User.destroy({
         where: {id: id}
     }).then(num => {
         if (num != null && !isNaN(num)){
@@ -99,9 +140,10 @@ async function deleteById(req,res){
 }
 module.exports = {userRepository: userRepository,
     createUser,
+    loginEmail,
     getAll,
     getById,
-    getByName,
+    getByStatus,
     updateById,
     deleteById
 };

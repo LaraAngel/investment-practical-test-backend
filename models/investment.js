@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize')
+const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
-  const Investment =  sequelize.define('investment', {
+  return sequelize.define('investment', {
     id: {
       autoIncrement: true,
       type: DataTypes.BIGINT,
@@ -53,34 +53,23 @@ module.exports = function(sequelize, DataTypes) {
         unique: true,
         using: "BTREE",
         fields: [
-          {name: "id"},
+          { name: "id" },
         ]
       },
       {
         name: "FK5ig73d6x6vrxcj1wyprfvbk9l",
         using: "BTREE",
         fields: [
-          {name: "investment_option_id"},
+          { name: "investment_option_id" },
         ]
       },
       {
         name: "FKej8s7qryh503oyfaruucml436",
         using: "BTREE",
         fields: [
-          {name: "status_id"},
+          { name: "status_id" },
         ]
       },
     ]
   });
-  Investment.associate = (models) =>{
-    Investment.hasOne(models.status_id, {
-      as: 'status',
-      foreignKey: 'status_id'
-    });
-    Investment.hasOne(models.investment_option_id, {
-      as: 'investment_option',
-      foreignKey: 'investment_option_id'
-    })
-  }
-  return Investment;
 };
