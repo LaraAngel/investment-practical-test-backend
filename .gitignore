@@ -208,7 +208,7 @@ e2e/*.map
 # Yarn Integrity file
 
 # dotenv environment variable files
-
+.env
 # parcel-bundler cache (https://parceljs.org/)
 
 # Next.js build output

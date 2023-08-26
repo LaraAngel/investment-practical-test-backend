@@ -67,7 +67,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     instanceMethods: {
       validPassword: (password) =>{
-        return bcrypt.compareSync(password, this.password)
+        return bcrypt.compare(password, User.password)
       }
     },
     indexes: [
@@ -88,8 +88,8 @@ module.exports = function(sequelize, DataTypes) {
       },
     ]
   });
-    User.prototype.validPassword = async (pass, hash) => {
-        return await bcrypt.compareSync(pass, hash);
+    User.prototype.validPassword = async function(pass, hash){
+        return await bcrypt.compare(pass, this.password);
     }
 
   return User;
