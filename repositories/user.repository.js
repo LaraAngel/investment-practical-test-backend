@@ -27,7 +27,6 @@ async function getAll(req,res){
 async function createUser(req,res){
     try{
         const obj =req.body;
-        console.log(JSON.stringify(obj))
         const newUser = await User.create(obj);
         res.status(201).json(newUser);
     }
@@ -100,25 +99,23 @@ async function getByStatus(req, res){
 async function updateById(req,res){
     const id = req.params.id;
     req.body.id = id;
-    User.update(req.body,{
-        where: {id:id}
-    })
-        .then(num => {
-            if (num){
-                res.send({
-                    message: "user updated"
-                });
-            }else{
-                res.send({
-                    message: `Cant find user with id ${id}`
-                });
-            }
-        })
-        .catch(err=>{
-            res.status(500).send({
-                message: "error at updating"
-            });
+
+    const user = await User.findByPk(id);
+
+    if (user){
+        user.set(req.body);
+
+        await user.save();
+
+        res.send({
+            message: "update"
         });
+    } else {
+        res.status(404).send({
+            message: `didn't find user with id ${id}`
+        })
+    }
+
 }
 async function deleteById(req,res){
     const id = req.params.id;
